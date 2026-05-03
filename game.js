@@ -14,7 +14,7 @@ const professorTip = document.querySelector("#professorTip");
 const professorText = document.querySelector("#professorText");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.7.0";
+const GAME_VERSION = "v0.7.1";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -1032,6 +1032,13 @@ function playBestSound() {
   playTone(660, 0, 0.08, "sine", 0.13);
   playTone(880, 0.07, 0.1, "sine", 0.12);
   playTone(1320, 0.16, 0.18, "sine", 0.11);
+}
+
+function playFeverSound() {
+  playTone(523, 0, 0.08, "triangle", 0.13);
+  playTone(659, 0.07, 0.08, "triangle", 0.12);
+  playTone(784, 0.14, 0.1, "triangle", 0.12);
+  playTone(1046, 0.24, 0.18, "sine", 0.11);
 }
 
 function playGameOverSound() {
