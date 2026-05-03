@@ -6,7 +6,7 @@ const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.2.1";
+const GAME_VERSION = "v0.2.2";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -177,12 +177,15 @@ function endGame() {
 }
 
 function hitRect(a, b) {
-  const pad = 10;
+  const playerPadX = 14;
+  const playerPadY = 12;
+  const cloudPadX = 18;
+  const cloudPadY = 14;
   return (
-    a.x + pad < b.x + b.w &&
-    a.x + a.w - pad > b.x &&
-    a.y + pad < b.y + b.h &&
-    a.y + a.h - pad > b.y
+    a.x + playerPadX < b.x + b.w - cloudPadX &&
+    a.x + a.w - playerPadX > b.x + cloudPadX &&
+    a.y + playerPadY < b.y + b.h - cloudPadY &&
+    a.y + a.h - playerPadY > b.y + cloudPadY
   );
 }
 
