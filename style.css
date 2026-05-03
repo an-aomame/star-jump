@@ -63,6 +63,49 @@ strong {
   line-height: 1;
 }
 
+.lives {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  min-height: 28px;
+  padding-top: 2px;
+}
+
+.heart {
+  position: relative;
+  width: 20px;
+  height: 18px;
+  transform: rotate(-45deg);
+  transform-origin: center;
+  background: #e85d75;
+  filter: drop-shadow(0 2px 0 #b9354c);
+}
+
+.heart::before,
+.heart::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 18px;
+  border-radius: 50%;
+  background: inherit;
+}
+
+.heart::before {
+  top: -9px;
+  left: 0;
+}
+
+.heart::after {
+  top: 0;
+  left: 9px;
+}
+
+.heart.empty {
+  background: rgba(72, 104, 122, 0.28);
+  filter: none;
+}
+
 canvas {
   display: block;
   width: 100%;

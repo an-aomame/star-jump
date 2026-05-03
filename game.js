@@ -15,7 +15,7 @@ const professorTip = document.querySelector("#professorTip");
 const professorText = document.querySelector("#professorText");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.7.2";
+const GAME_VERSION = "v0.7.3";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -125,7 +125,7 @@ const player = {
 };
 
 bestEl.textContent = best;
-livesEl.textContent = lives;
+renderLives();
 versionEl.textContent = GAME_VERSION;
 startButton.addEventListener("click", jump);
 titleButton.addEventListener("click", showTitleScreen);
@@ -173,7 +173,7 @@ function resetGame() {
   player.happyTimer = 0;
   player.invincibleTimer = 0;
   scoreEl.textContent = score;
-  livesEl.textContent = lives;
+  renderLives();
   characterSelect.classList.add("hidden");
   helpPanel.classList.add("hidden");
   professorTip.classList.add("hidden");
@@ -393,7 +393,7 @@ function isFeverActive() {
 
 function loseLife(cloud) {
   lives -= 1;
-  livesEl.textContent = lives;
+  renderLives();
   player.invincibleTimer = 1400;
   player.happyTimer = 0;
   bestFlash = Math.max(bestFlash, 14);
@@ -450,7 +450,7 @@ function showTitleScreen() {
   player.happyTimer = 0;
   player.invincibleTimer = 0;
   scoreEl.textContent = score;
-  livesEl.textContent = lives;
+  renderLives();
   overlay.classList.remove("hidden");
   overlay.querySelector("h1").innerHTML = "<ruby>星<rt>ほし</rt></ruby>あつめジャンプ";
   overlay.querySelector("p").innerHTML =
@@ -509,6 +509,16 @@ function syncCharacterButtons() {
     button.setAttribute("aria-pressed", String(selected));
   });
   professorText.innerHTML = getSelectedCharacter().description;
+}
+
+function renderLives() {
+  livesEl.innerHTML = "";
+  livesEl.setAttribute("aria-label", `残機 ${lives}`);
+  for (let i = 0; i < maxLives; i += 1) {
+    const heart = document.createElement("span");
+    heart.className = i < lives ? "heart" : "heart empty";
+    livesEl.appendChild(heart);
+  }
 }
 
 function hitRect(a, b) {
