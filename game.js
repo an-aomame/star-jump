@@ -6,7 +6,7 @@ const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.6.0";
+const GAME_VERSION = "v0.6.1";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -32,6 +32,30 @@ let audioContext;
 let musicGain;
 let musicTimer;
 let musicStep = 0;
+let musicTheme = "day";
+
+const musicThemes = {
+  day: {
+    melody: [392, 494, 587, 494, 440, 523, 659, 523],
+    bass: [196, 247, 220, 262],
+    harmony: [330, 392, 349, 392],
+    leadType: "triangle",
+    bassType: "sine",
+    leadVolume: 0.12,
+    bassVolume: 0.08,
+    harmonyVolume: 0.045,
+  },
+  night: {
+    melody: [330, 392, 494, 440, 392, 349, 440, 392],
+    bass: [165, 196, 147, 175],
+    harmony: [247, 294, 262, 220],
+    leadType: "sine",
+    bassType: "triangle",
+    leadVolume: 0.095,
+    bassVolume: 0.065,
+    harmonyVolume: 0.055,
+  },
+};
 
 const player = {
   x: 112,
@@ -598,6 +622,7 @@ function startMusic() {
     gain.gain.setValueAtTime(0.2, getAudioContext().currentTime);
   }
   musicStep = 0;
+  musicTheme = getMusicThemeName();
   scheduleMusicBar();
   musicTimer = setInterval(scheduleMusicBar, 1920);
 }
@@ -618,17 +643,36 @@ function scheduleMusicBar() {
     return;
   }
 
-  const melody = [392, 494, 587, 494, 440, 523, 659, 523];
-  const bass = [196, 247, 220, 262];
+  const nextTheme = getMusicThemeName();
+  if (nextTheme !== musicTheme) {
+    musicTheme = nextTheme;
+    musicStep = 0;
+  }
+
+  const theme = musicThemes[musicTheme];
   for (let i = 0; i < 8; i += 1) {
     const step = musicStep + i;
     const start = i * 0.24;
-    playMusicTone(melody[step % melody.length], start, 0.16, "triangle", 0.12);
+    playMusicTone(theme.melody[step % theme.melody.length], start, 0.16, theme.leadType, theme.leadVolume);
     if (i % 2 === 0) {
-      playMusicTone(bass[Math.floor(step / 2) % bass.length], start, 0.22, "sine", 0.08);
+      playMusicTone(theme.bass[Math.floor(step / 2) % theme.bass.length], start, 0.22, theme.bassType, theme.bassVolume);
+    }
+    if (i % 4 === 0) {
+      playMusicTone(
+        theme.harmony[Math.floor(step / 4) % theme.harmony.length],
+        start + 0.04,
+        0.5,
+        "sine",
+        theme.harmonyVolume,
+      );
     }
   }
   musicStep += 8;
+}
+
+function getMusicThemeName() {
+  const progress = Math.min(worldTime / 45000, 1);
+  return progress >= 0.62 ? "night" : "day";
 }
 
 function getMusicGain() {
