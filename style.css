@@ -68,7 +68,7 @@ strong {
   line-height: 1;
 }
 
-.lives {
+.top-bar .lives {
   display: flex;
   flex-wrap: nowrap;
   justify-content: center;
