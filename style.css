@@ -120,9 +120,30 @@ button {
   cursor: pointer;
 }
 
+.overlay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
 button:active {
   transform: translateY(4px);
   box-shadow: 0 4px 0 #b9354c, 0 12px 18px rgba(98, 35, 50, 0.18);
+}
+
+.secondary-button {
+  color: #17324d;
+  background: #fff6a8;
+  box-shadow: 0 8px 0 #d7a942, 0 18px 24px rgba(98, 78, 35, 0.18);
+}
+
+.secondary-button:active {
+  box-shadow: 0 4px 0 #d7a942, 0 12px 18px rgba(98, 78, 35, 0.16);
+}
+
+.hidden {
+  display: none;
 }
 
 .version-label {

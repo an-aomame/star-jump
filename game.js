@@ -4,9 +4,10 @@ const scoreEl = document.querySelector("#score");
 const bestEl = document.querySelector("#best");
 const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
+const titleButton = document.querySelector("#titleButton");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.6.1";
+const GAME_VERSION = "v0.6.3";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -65,11 +66,13 @@ const player = {
   vy: 0,
   grounded: true,
   jumpsLeft: 2,
+  happyTimer: 0,
 };
 
 bestEl.textContent = best;
 versionEl.textContent = GAME_VERSION;
 startButton.addEventListener("click", jump);
+titleButton.addEventListener("click", showTitleScreen);
 canvas.addEventListener("pointerdown", jump);
 window.addEventListener("keydown", (event) => {
   if (event.code === "Space" || event.code === "ArrowUp") {
@@ -100,7 +103,9 @@ function resetGame() {
   player.vy = 0;
   player.grounded = true;
   player.jumpsLeft = 2;
+  player.happyTimer = 0;
   scoreEl.textContent = score;
+  titleButton.classList.add("hidden");
   overlay.classList.add("hidden");
   requestAnimationFrame(loop);
 }
@@ -145,6 +150,7 @@ function update(dt) {
 
   player.vy += 0.78 * dt;
   player.y += player.vy * dt;
+  player.happyTimer = Math.max(0, player.happyTimer - dt);
 
   if (player.y >= groundY - player.h) {
     player.y = groundY - player.h;
@@ -195,6 +201,7 @@ function update(dt) {
         color: star.popColor,
         age: 0,
       });
+      player.happyTimer = Math.max(player.happyTimer, 28);
       playCollectSound(star.points);
       if (score > best) {
         best = score;
@@ -266,10 +273,36 @@ function endGame() {
   stopMusic();
   overlay.classList.remove("hidden");
   overlay.querySelector("h1").textContent = "もう一回";
-  overlay.querySelector("p").textContent = `星 ${score} こ。タップでリトライ。`;
+  overlay.querySelector("p").textContent = `星 ${score} こ。`;
   startButton.textContent = "リトライ";
+  titleButton.classList.remove("hidden");
   playGameOverSound();
   safeDraw(draw);
+}
+
+function showTitleScreen() {
+  running = false;
+  gameOver = false;
+  stopMusic();
+  score = 0;
+  worldTime = 0;
+  clouds = [];
+  stars = [];
+  scorePops = [];
+  bestPops = [];
+  bestFlash = 0;
+  player.y = groundY - player.h;
+  player.vy = 0;
+  player.grounded = true;
+  player.jumpsLeft = 2;
+  player.happyTimer = 0;
+  scoreEl.textContent = score;
+  overlay.classList.remove("hidden");
+  overlay.querySelector("h1").textContent = "星あつめジャンプ";
+  overlay.querySelector("p").textContent = "タップでジャンプ。星を集めて、雲をよけよう。";
+  startButton.textContent = "スタート";
+  titleButton.classList.add("hidden");
+  safeDraw(drawIntro);
 }
 
 function hitRect(a, b) {
@@ -358,26 +391,35 @@ function drawGround() {
 function drawPlayer() {
   const x = player.x;
   const y = player.y;
+  const happy = player.happyTimer > 0;
+  const bounce = happy ? Math.sin(player.happyTimer * 0.45) * 1.5 : 0;
   ctx.fillStyle = "#ffcf54";
   ctx.beginPath();
-  drawRoundRect(x, y + 7, player.w, player.h - 7, 16);
+  drawRoundRect(x, y + 7 + bounce, player.w, player.h - 7, 16);
   ctx.fill();
 
   ctx.fillStyle = "#ff8f54";
   ctx.beginPath();
-  ctx.arc(x + player.w * 0.5, y + 10, 24, Math.PI, 0);
-  ctx.fill();
-
-  ctx.fillStyle = "#17324d";
-  ctx.beginPath();
-  ctx.arc(x + 21, y + 28, 4, 0, Math.PI * 2);
-  ctx.arc(x + 37, y + 28, 4, 0, Math.PI * 2);
+  ctx.arc(x + player.w * 0.5, y + 10 + bounce, 24, Math.PI, 0);
   ctx.fill();
 
   ctx.strokeStyle = "#17324d";
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(x + 29, y + 37, 10, 0.15, Math.PI - 0.15);
+  if (happy) {
+    ctx.arc(x + 21, y + 29 + bounce, 5, Math.PI * 0.08, Math.PI * 0.92);
+    ctx.moveTo(x + 42, y + 29 + bounce);
+    ctx.arc(x + 37, y + 29 + bounce, 5, Math.PI * 0.08, Math.PI * 0.92);
+    ctx.moveTo(x + 42, y + 36 + bounce);
+    ctx.arc(x + 29, y + 36 + bounce, 13, 0.18, Math.PI - 0.18);
+  } else {
+    ctx.fillStyle = "#17324d";
+    ctx.arc(x + 21, y + 28 + bounce, 4, 0, Math.PI * 2);
+    ctx.arc(x + 37, y + 28 + bounce, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 29, y + 37 + bounce, 10, 0.15, Math.PI - 0.15);
+  }
   ctx.stroke();
 }
 
