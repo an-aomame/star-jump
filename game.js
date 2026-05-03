@@ -9,7 +9,7 @@ const characterSelect = document.querySelector("#characterSelect");
 const characterButtons = document.querySelectorAll(".character-button");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.6.5";
+const GAME_VERSION = "v0.6.6";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -60,9 +60,9 @@ const characters = {
   },
   bolt: {
     name: "ボルト",
-    jumpPower: -18.4,
-    airJumpPower: -18.4,
-    gravity: 0.9,
+    jumpPower: -21.4,
+    airJumpPower: -21.4,
+    gravity: 0.86,
     maxJumps: 1,
     bodyColor: "#fff6a8",
     capColor: "#e85d75",
