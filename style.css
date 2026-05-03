@@ -230,6 +230,102 @@ button {
   font-weight: 800;
 }
 
+.help-panel {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 560px);
+}
+
+.help-rules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  text-align: left;
+}
+
+.help-rules div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 2px solid rgba(255, 255, 255, 0.74);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #17324d;
+  font-size: 0.88rem;
+  font-weight: 850;
+  box-shadow: 0 8px 16px rgba(29, 80, 115, 0.12);
+}
+
+.rule-icon {
+  position: relative;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+}
+
+.jump-icon {
+  border-radius: 50%;
+  background: #fff6a8;
+  border: 3px solid #e85d75;
+}
+
+.jump-icon::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  border-left: 3px solid #e85d75;
+  border-top: 3px solid #e85d75;
+  transform: rotate(45deg);
+}
+
+.cloud-icon {
+  width: 34px;
+}
+
+.cloud-icon::before,
+.cloud-icon::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: #dce6f5;
+  border: 2px solid #8aa0c5;
+}
+
+.cloud-icon::before {
+  left: 1px;
+  right: 1px;
+  bottom: 4px;
+  height: 15px;
+}
+
+.cloud-icon::after {
+  left: 8px;
+  top: 2px;
+  width: 18px;
+  height: 18px;
+}
+
+.star-icon {
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 56%, 80% 92%, 50% 70%, 20% 92%, 32% 56%, 2% 35%, 39% 35%);
+}
+
+.gold-star {
+  background: #ffd84d;
+}
+
+.blue-star {
+  background: #74f2ff;
+}
+
+.pink-star {
+  background: #ff6bd6;
+}
+
 button:active {
   transform: translateY(4px);
   box-shadow: 0 4px 0 #b9354c, 0 12px 18px rgba(98, 35, 50, 0.18);
@@ -325,5 +421,29 @@ button:active {
 
   .professor-tip p {
     font-size: 0.78rem;
+  }
+
+  .help-panel {
+    gap: 8px;
+  }
+
+  .help-rules {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .help-rules div {
+    min-height: 36px;
+    padding: 5px 8px;
+    font-size: 0.76rem;
+  }
+
+  .rule-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .cloud-icon {
+    width: 28px;
   }
 }

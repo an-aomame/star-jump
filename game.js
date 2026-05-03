@@ -5,13 +5,16 @@ const bestEl = document.querySelector("#best");
 const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const titleButton = document.querySelector("#titleButton");
+const helpButton = document.querySelector("#helpButton");
+const helpBackButton = document.querySelector("#helpBackButton");
 const characterSelect = document.querySelector("#characterSelect");
 const characterButtons = document.querySelectorAll(".character-button");
+const helpPanel = document.querySelector("#helpPanel");
 const professorTip = document.querySelector("#professorTip");
 const professorText = document.querySelector("#professorText");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.6.8";
+const GAME_VERSION = "v0.6.9";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -23,6 +26,7 @@ let score = 0;
 let speed = 5.4;
 let running = false;
 let gameOver = false;
+let showingHelp = false;
 let lastTime = 0;
 let worldTime = 0;
 let spawnTimer = 0;
@@ -119,6 +123,8 @@ bestEl.textContent = best;
 versionEl.textContent = GAME_VERSION;
 startButton.addEventListener("click", jump);
 titleButton.addEventListener("click", showTitleScreen);
+helpButton.addEventListener("click", showHelpScreen);
+helpBackButton.addEventListener("click", showTitleScreen);
 characterButtons.forEach((button) => {
   button.addEventListener("click", () => {
     selectCharacter(button.dataset.character);
@@ -139,6 +145,7 @@ function resetGame() {
   speed = 5.4;
   running = true;
   gameOver = false;
+  showingHelp = false;
   lastTime = performance.now();
   worldTime = 0;
   spawnTimer = 0;
@@ -158,7 +165,10 @@ function resetGame() {
   player.happyTimer = 0;
   scoreEl.textContent = score;
   characterSelect.classList.add("hidden");
+  helpPanel.classList.add("hidden");
   professorTip.classList.add("hidden");
+  helpButton.classList.add("hidden");
+  helpBackButton.classList.add("hidden");
   titleButton.classList.add("hidden");
   overlay.classList.add("hidden");
   requestAnimationFrame(loop);
@@ -166,6 +176,10 @@ function resetGame() {
 
 function jump() {
   unlockAudio();
+
+  if (showingHelp) {
+    return;
+  }
 
   if (!running) {
     resetGame();
@@ -326,13 +340,17 @@ function spawnStar() {
 function endGame() {
   running = false;
   gameOver = true;
+  showingHelp = false;
   stopMusic();
   overlay.classList.remove("hidden");
   overlay.querySelector("h1").innerHTML = "もう<ruby>一回<rt>いっかい</rt></ruby>";
   overlay.querySelector("p").innerHTML = `<ruby>星<rt>ほし</rt></ruby> ${score} こ。`;
   startButton.textContent = "リトライ";
   characterSelect.classList.add("hidden");
+  helpPanel.classList.add("hidden");
   professorTip.classList.add("hidden");
+  helpButton.classList.add("hidden");
+  helpBackButton.classList.add("hidden");
   titleButton.classList.remove("hidden");
   playGameOverSound();
   safeDraw(draw);
@@ -341,6 +359,7 @@ function endGame() {
 function showTitleScreen() {
   running = false;
   gameOver = false;
+  showingHelp = false;
   stopMusic();
   score = 0;
   worldTime = 0;
@@ -360,10 +379,33 @@ function showTitleScreen() {
   overlay.querySelector("p").innerHTML =
     "キャラを<ruby>選<rt>えら</rt></ruby>んで、<ruby>星<rt>ほし</rt></ruby>を<ruby>集<rt>あつ</rt></ruby>めよう。";
   startButton.textContent = "スタート";
+  startButton.classList.remove("hidden");
   characterSelect.classList.remove("hidden");
+  helpPanel.classList.add("hidden");
   professorTip.classList.remove("hidden");
+  helpButton.classList.remove("hidden");
+  helpBackButton.classList.add("hidden");
   titleButton.classList.add("hidden");
   syncCharacterButtons();
+  safeDraw(drawIntro);
+}
+
+function showHelpScreen() {
+  running = false;
+  gameOver = false;
+  showingHelp = true;
+  stopMusic();
+  overlay.classList.remove("hidden");
+  overlay.querySelector("h1").innerHTML = "あそびかた";
+  overlay.querySelector("p").innerHTML =
+    "<ruby>博士<rt>はかせ</rt></ruby>が<ruby>基本<rt>きほん</rt></ruby>ルールを<ruby>教<rt>おし</rt></ruby>えるぞ。";
+  startButton.classList.add("hidden");
+  characterSelect.classList.add("hidden");
+  professorTip.classList.add("hidden");
+  helpPanel.classList.remove("hidden");
+  helpButton.classList.add("hidden");
+  helpBackButton.classList.remove("hidden");
+  titleButton.classList.add("hidden");
   safeDraw(drawIntro);
 }
 

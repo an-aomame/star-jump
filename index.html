@@ -44,8 +44,28 @@
           </div>
           <p id="professorText"></p>
         </div>
+        <div id="helpPanel" class="help-panel hidden">
+          <div class="professor-tip">
+            <div class="professor-face" aria-hidden="true">
+              <span></span>
+            </div>
+            <p>
+              <ruby>博士<rt>はかせ</rt></ruby>じゃ。タップかスペースでジャンプして、
+              <ruby>雲<rt>くも</rt></ruby>をよけながら<ruby>星<rt>ほし</rt></ruby>を<ruby>集<rt>あつ</rt></ruby>めるんじゃ。
+            </p>
+          </div>
+          <div class="help-rules">
+            <div><span class="rule-icon jump-icon"></span><span>タップ / スペース / ↑ でジャンプ</span></div>
+            <div><span class="rule-icon cloud-icon"></span><span><ruby>雲<rt>くも</rt></ruby>にあたるとゲームオーバー</span></div>
+            <div><span class="rule-icon star-icon gold-star"></span><span>きいろの<ruby>星<rt>ほし</rt></ruby>: +1</span></div>
+            <div><span class="rule-icon star-icon blue-star"></span><span>あおい<ruby>星<rt>ほし</rt></ruby>: +2</span></div>
+            <div><span class="rule-icon star-icon pink-star"></span><span>ピンクの<ruby>星<rt>ほし</rt></ruby>: +5</span></div>
+          </div>
+        </div>
         <div class="overlay-actions">
           <button id="startButton" type="button">スタート</button>
+          <button id="helpButton" class="secondary-button" type="button">あそびかた</button>
+          <button id="helpBackButton" class="secondary-button hidden" type="button">もどる</button>
           <button id="titleButton" class="secondary-button hidden" type="button">タイトルへ</button>
         </div>
         <span id="version" class="version-label"></span>
