@@ -5,13 +5,16 @@ const bestEl = document.querySelector("#best");
 const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const titleButton = document.querySelector("#titleButton");
+const characterSelect = document.querySelector("#characterSelect");
+const characterButtons = document.querySelectorAll(".character-button");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.6.3";
+const GAME_VERSION = "v0.6.5";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
 const bestKey = "star-jump-best";
+const characterKey = "star-jump-character";
 
 let best = Number(localStorage.getItem(bestKey) || 0);
 let score = 0;
@@ -34,6 +37,41 @@ let musicGain;
 let musicTimer;
 let musicStep = 0;
 let musicTheme = "day";
+let selectedCharacterId = localStorage.getItem(characterKey) || "star";
+
+const characters = {
+  star: {
+    name: "スター",
+    jumpPower: -15.5,
+    airJumpPower: -13.2,
+    gravity: 0.78,
+    maxJumps: 2,
+    bodyColor: "#ffcf54",
+    capColor: "#ff8f54",
+  },
+  sora: {
+    name: "ソラ",
+    jumpPower: -13.8,
+    airJumpPower: -11.8,
+    gravity: 0.68,
+    maxJumps: 3,
+    bodyColor: "#74f2ff",
+    capColor: "#39c7ff",
+  },
+  bolt: {
+    name: "ボルト",
+    jumpPower: -18.4,
+    airJumpPower: -18.4,
+    gravity: 0.9,
+    maxJumps: 1,
+    bodyColor: "#fff6a8",
+    capColor: "#e85d75",
+  },
+};
+
+if (!characters[selectedCharacterId]) {
+  selectedCharacterId = "star";
+}
 
 const musicThemes = {
   day: {
@@ -73,6 +111,11 @@ bestEl.textContent = best;
 versionEl.textContent = GAME_VERSION;
 startButton.addEventListener("click", jump);
 titleButton.addEventListener("click", showTitleScreen);
+characterButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    selectCharacter(button.dataset.character);
+  });
+});
 canvas.addEventListener("pointerdown", jump);
 window.addEventListener("keydown", (event) => {
   if (event.code === "Space" || event.code === "ArrowUp") {
@@ -81,6 +124,7 @@ window.addEventListener("keydown", (event) => {
   }
 });
 safeDraw(drawIntro);
+syncCharacterButtons();
 
 function resetGame() {
   score = 0;
@@ -102,9 +146,10 @@ function resetGame() {
   player.y = groundY - player.h;
   player.vy = 0;
   player.grounded = true;
-  player.jumpsLeft = 2;
+  player.jumpsLeft = getSelectedCharacter().maxJumps;
   player.happyTimer = 0;
   scoreEl.textContent = score;
+  characterSelect.classList.add("hidden");
   titleButton.classList.add("hidden");
   overlay.classList.add("hidden");
   requestAnimationFrame(loop);
@@ -124,7 +169,8 @@ function jump() {
   }
 
   if (player.jumpsLeft > 0) {
-    player.vy = player.grounded ? -15.5 : -13.2;
+    const character = getSelectedCharacter();
+    player.vy = player.grounded ? character.jumpPower : character.airJumpPower;
     player.grounded = false;
     player.jumpsLeft -= 1;
   }
@@ -148,7 +194,7 @@ function update(dt) {
   spawnTimer -= 16.67 * dt;
   starTimer -= 16.67 * dt;
 
-  player.vy += 0.78 * dt;
+  player.vy += getSelectedCharacter().gravity * dt;
   player.y += player.vy * dt;
   player.happyTimer = Math.max(0, player.happyTimer - dt);
 
@@ -156,7 +202,7 @@ function update(dt) {
     player.y = groundY - player.h;
     player.vy = 0;
     player.grounded = true;
-    player.jumpsLeft = 2;
+    player.jumpsLeft = getSelectedCharacter().maxJumps;
   }
 
   if (spawnTimer <= 0) {
@@ -217,10 +263,11 @@ function update(dt) {
 }
 
 function spawnCloud() {
-  const size = 44 + Math.random() * 24;
+  const airborne = worldTime > 9000 && Math.random() < 0.34;
+  const size = airborne ? 38 + Math.random() * 18 : 44 + Math.random() * 24;
   clouds.push({
     x: W + 20,
-    y: groundY - size - 4,
+    y: airborne ? 230 + Math.random() * 66 : groundY - size - 4,
     w: size * 1.52,
     h: size,
   });
@@ -275,6 +322,7 @@ function endGame() {
   overlay.querySelector("h1").textContent = "もう一回";
   overlay.querySelector("p").textContent = `星 ${score} こ。`;
   startButton.textContent = "リトライ";
+  characterSelect.classList.add("hidden");
   titleButton.classList.remove("hidden");
   playGameOverSound();
   safeDraw(draw);
@@ -294,15 +342,41 @@ function showTitleScreen() {
   player.y = groundY - player.h;
   player.vy = 0;
   player.grounded = true;
-  player.jumpsLeft = 2;
+  player.jumpsLeft = getSelectedCharacter().maxJumps;
   player.happyTimer = 0;
   scoreEl.textContent = score;
   overlay.classList.remove("hidden");
   overlay.querySelector("h1").textContent = "星あつめジャンプ";
-  overlay.querySelector("p").textContent = "タップでジャンプ。星を集めて、雲をよけよう。";
+  overlay.querySelector("p").textContent = "キャラを選んで、星を集めよう。";
   startButton.textContent = "スタート";
+  characterSelect.classList.remove("hidden");
   titleButton.classList.add("hidden");
+  syncCharacterButtons();
   safeDraw(drawIntro);
+}
+
+function selectCharacter(characterId) {
+  if (!characters[characterId]) {
+    return;
+  }
+
+  selectedCharacterId = characterId;
+  localStorage.setItem(characterKey, selectedCharacterId);
+  player.jumpsLeft = getSelectedCharacter().maxJumps;
+  syncCharacterButtons();
+  safeDraw(drawIntro);
+}
+
+function getSelectedCharacter() {
+  return characters[selectedCharacterId] || characters.star;
+}
+
+function syncCharacterButtons() {
+  characterButtons.forEach((button) => {
+    const selected = button.dataset.character === selectedCharacterId;
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
 }
 
 function hitRect(a, b) {
@@ -391,14 +465,15 @@ function drawGround() {
 function drawPlayer() {
   const x = player.x;
   const y = player.y;
+  const character = getSelectedCharacter();
   const happy = player.happyTimer > 0;
   const bounce = happy ? Math.sin(player.happyTimer * 0.45) * 1.5 : 0;
-  ctx.fillStyle = "#ffcf54";
+  ctx.fillStyle = character.bodyColor;
   ctx.beginPath();
   drawRoundRect(x, y + 7 + bounce, player.w, player.h - 7, 16);
   ctx.fill();
 
-  ctx.fillStyle = "#ff8f54";
+  ctx.fillStyle = character.capColor;
   ctx.beginPath();
   ctx.arc(x + player.w * 0.5, y + 10 + bounce, 24, Math.PI, 0);
   ctx.fill();

@@ -127,6 +127,42 @@ button {
   gap: 12px;
 }
 
+.character-select {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: min(100%, 520px);
+}
+
+.character-button {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  min-height: 74px;
+  padding: 10px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.78);
+  border-radius: 8px;
+  color: #17324d;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 6px 0 rgba(72, 104, 122, 0.24), 0 12px 20px rgba(29, 80, 115, 0.14);
+}
+
+.character-button strong {
+  font-size: 1.08rem;
+}
+
+.character-button span {
+  font-size: 0.78rem;
+  font-weight: 850;
+  color: #48687a;
+}
+
+.character-button.selected {
+  border-color: #e85d75;
+  background: #fff6a8;
+  box-shadow: 0 6px 0 #d7a942, 0 12px 20px rgba(98, 78, 35, 0.18);
+}
+
 button:active {
   transform: translateY(4px);
   box-shadow: 0 4px 0 #b9354c, 0 12px 18px rgba(98, 35, 50, 0.18);
@@ -169,5 +205,25 @@ button:active {
 
   .overlay {
     top: 58px;
+    gap: 10px;
+    padding: 18px;
+  }
+
+  .character-select {
+    gap: 6px;
+    max-width: 320px;
+  }
+
+  .character-button {
+    min-height: 48px;
+    padding: 6px;
+  }
+
+  .character-button strong {
+    font-size: 0.92rem;
+  }
+
+  .character-button span {
+    font-size: 0.68rem;
   }
 }

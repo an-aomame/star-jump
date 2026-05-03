@@ -23,7 +23,21 @@
 
       <div id="overlay" class="overlay">
         <h1>星あつめジャンプ</h1>
-        <p>タップでジャンプ。星を集めて、雲をよけよう。</p>
+        <p>キャラを選んで、星を集めよう。</p>
+        <div id="characterSelect" class="character-select" aria-label="キャラクター選択">
+          <button class="character-button" type="button" data-character="star">
+            <strong>スター</strong>
+            <span>標準 / 2回</span>
+          </button>
+          <button class="character-button" type="button" data-character="sora">
+            <strong>ソラ</strong>
+            <span>ふわり / 3回</span>
+          </button>
+          <button class="character-button" type="button" data-character="bolt">
+            <strong>ボルト</strong>
+            <span>速い / 1回</span>
+          </button>
+        </div>
         <div class="overlay-actions">
           <button id="startButton" type="button">スタート</button>
           <button id="titleButton" class="secondary-button hidden" type="button">タイトルへ</button>
