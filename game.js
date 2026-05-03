@@ -15,7 +15,7 @@ const professorTip = document.querySelector("#professorTip");
 const professorText = document.querySelector("#professorText");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.7.5";
+const GAME_VERSION = "v0.8.0";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -40,6 +40,7 @@ let scorePops = [];
 let bestPops = [];
 let bestFlash = 0;
 let feverTimer = 0;
+let feverDuration = 6000;
 let bestToBeat = best;
 let bestCelebrated = false;
 let audioContext;
@@ -52,10 +53,15 @@ let selectedCharacterId = localStorage.getItem(characterKey) || "star";
 const characters = {
   star: {
     name: "スター",
+    w: 54,
+    h: 62,
     jumpPower: -15.5,
     airJumpPower: -13.2,
     gravity: 0.78,
     maxJumps: 2,
+    collectBonus: 0,
+    feverChanceBonus: 0,
+    feverTimeBonus: 0,
     bodyColor: "#ffcf54",
     capColor: "#ff8f54",
     description:
@@ -63,10 +69,15 @@ const characters = {
   },
   sora: {
     name: "ソラ",
+    w: 52,
+    h: 60,
     jumpPower: -13.8,
     airJumpPower: -11.8,
     gravity: 0.68,
     maxJumps: 3,
+    collectBonus: 2,
+    feverChanceBonus: 0,
+    feverTimeBonus: 0,
     bodyColor: "#74f2ff",
     capColor: "#39c7ff",
     description:
@@ -74,14 +85,83 @@ const characters = {
   },
   bolt: {
     name: "ボルト",
+    w: 50,
+    h: 60,
     jumpPower: -21.4,
     airJumpPower: -21.4,
     gravity: 0.86,
     maxJumps: 1,
+    collectBonus: -1,
+    feverChanceBonus: 0,
+    feverTimeBonus: 0,
     bodyColor: "#fff6a8",
     capColor: "#e85d75",
     description:
       "ボルトは<ruby>一撃<rt>いちげき</rt></ruby>で<ruby>高<rt>たか</rt></ruby>く<ruby>跳<rt>と</rt></ruby>ぶ<ruby>勝負型<rt>しょうぶがた</rt></ruby>じゃ。<ruby>早<rt>はや</rt></ruby>めに<ruby>押<rt>お</rt></ruby>すと<ruby>上<rt>うえ</rt></ruby>の<ruby>星<rt>ほし</rt></ruby>にも<ruby>届<rt>とど</rt></ruby>き、<ruby>空中雲<rt>くうちゅうぐも</rt></ruby>も<ruby>越<rt>こ</rt></ruby>えやすいぞ。",
+  },
+  noppo: {
+    name: "ノッポ",
+    w: 60,
+    h: 72,
+    jumpPower: -14.8,
+    airJumpPower: -12.4,
+    gravity: 0.8,
+    maxJumps: 2,
+    collectBonus: 16,
+    feverChanceBonus: 0,
+    feverTimeBonus: 0,
+    bodyColor: "#ffd84d",
+    capColor: "#ffb13d",
+    description:
+      "ノッポは<ruby>星<rt>ほし</rt></ruby>を<ruby>集<rt>あつ</rt></ruby>めるのが<ruby>得意<rt>とくい</rt></ruby>じゃ。からだが<ruby>大<rt>おお</rt></ruby>きいぶん、<ruby>雲<rt>くも</rt></ruby>には<ruby>気<rt>き</rt></ruby>をつけるんじゃぞ。",
+  },
+  leaf: {
+    name: "リーフ",
+    w: 54,
+    h: 62,
+    jumpPower: -14.8,
+    airJumpPower: -12.6,
+    gravity: 0.62,
+    maxJumps: 2,
+    collectBonus: 4,
+    feverChanceBonus: 0,
+    feverTimeBonus: 0,
+    bodyColor: "#7dff92",
+    capColor: "#43b86b",
+    description:
+      "リーフは<ruby>落<rt>お</rt></ruby>ちるのがゆっくりじゃ。<ruby>空中<rt>くうちゅう</rt></ruby>で<ruby>考<rt>かんが</rt></ruby>える<ruby>時間<rt>じかん</rt></ruby>があるから、<ruby>雲<rt>くも</rt></ruby>をよけやすいぞ。",
+  },
+  shizuku: {
+    name: "しずく",
+    w: 44,
+    h: 54,
+    jumpPower: -14.6,
+    airJumpPower: -12.2,
+    gravity: 0.82,
+    maxJumps: 2,
+    collectBonus: -5,
+    feverChanceBonus: 0,
+    feverTimeBonus: 0,
+    bodyColor: "#8fb2ff",
+    capColor: "#4a70d2",
+    description:
+      "しずくはからだが<ruby>小<rt>ちい</rt></ruby>さいから、<ruby>雲<rt>くも</rt></ruby>をすりぬけやすいんじゃ。<ruby>星<rt>ほし</rt></ruby>は<ruby>近<rt>ちか</rt></ruby>づいて<ruby>取<rt>と</rt></ruby>るんじゃぞ。",
+  },
+  hotaru: {
+    name: "ほたる",
+    w: 52,
+    h: 60,
+    jumpPower: -14.9,
+    airJumpPower: -12.4,
+    gravity: 0.74,
+    maxJumps: 2,
+    collectBonus: 2,
+    feverChanceBonus: 0.06,
+    feverTimeBonus: 2200,
+    bodyColor: "#d9a8ff",
+    capColor: "#8d3cff",
+    description:
+      "ほたるはフィーバーが<ruby>得意<rt>とくい</rt></ruby>なんじゃ。でっかい<ruby>星<rt>ほし</rt></ruby>を<ruby>見<rt>み</rt></ruby>つけたら、ボーナスタイムで<ruby>一気<rt>いっき</rt></ruby>に<ruby>集<rt>あつ</rt></ruby>めるんじゃ！",
   },
 };
 
@@ -124,6 +204,8 @@ const player = {
   invincibleTimer: 0,
 };
 
+applyCharacterStats();
+
 bestEl.textContent = best;
 renderLives();
 versionEl.textContent = GAME_VERSION;
@@ -163,6 +245,7 @@ function resetGame() {
   bestPops = [];
   bestFlash = 0;
   feverTimer = 0;
+  feverDuration = 6000;
   bestToBeat = best;
   bestCelebrated = false;
   startMusic();
@@ -277,7 +360,7 @@ function update(dt) {
   for (const star of stars) {
     const dx = player.x + player.w / 2 - star.x;
     const dy = player.y + player.h / 2 - star.y;
-    if (Math.hypot(dx, dy) < star.r + 34) {
+    if (Math.hypot(dx, dy) < star.r + 34 + getSelectedCharacter().collectBonus) {
       star.collected = true;
       if (star.fever) {
         startFever(star.x, star.y);
@@ -324,7 +407,8 @@ function spawnCloud() {
 }
 
 function spawnStar() {
-  const feverStar = !isFeverActive() && worldTime > 12000 && Math.random() < 0.07;
+  const feverChance = 0.07 + getSelectedCharacter().feverChanceBonus;
+  const feverStar = !isFeverActive() && worldTime > 12000 && Math.random() < feverChance;
   const highStar = Math.random() < 0.34;
   const rarityRoll = Math.random();
   const starType =
@@ -376,7 +460,8 @@ function spawnStar() {
 }
 
 function startFever(x, y) {
-  feverTimer = 6000;
+  feverDuration = 6000 + getSelectedCharacter().feverTimeBonus;
+  feverTimer = feverDuration;
   bestFlash = Math.max(bestFlash, 18);
   scorePops.push({
     x,
@@ -442,6 +527,7 @@ function showTitleScreen() {
   bestPops = [];
   bestFlash = 0;
   feverTimer = 0;
+  feverDuration = 6000;
   lives = maxLives;
   player.y = groundY - player.h;
   player.vy = 0;
@@ -493,6 +579,7 @@ function selectCharacter(characterId) {
 
   selectedCharacterId = characterId;
   localStorage.setItem(characterKey, selectedCharacterId);
+  applyCharacterStats();
   player.jumpsLeft = getSelectedCharacter().maxJumps;
   syncCharacterButtons();
   safeDraw(drawIntro);
@@ -500,6 +587,14 @@ function selectCharacter(characterId) {
 
 function getSelectedCharacter() {
   return characters[selectedCharacterId] || characters.star;
+}
+
+function applyCharacterStats() {
+  const character = getSelectedCharacter();
+  const footY = Math.min(player.y + player.h, groundY);
+  player.w = character.w;
+  player.h = character.h;
+  player.y = footY - player.h;
 }
 
 function syncCharacterButtons() {
@@ -613,35 +708,37 @@ function drawPlayer() {
 
   const x = player.x;
   const y = player.y;
+  const w = player.w;
+  const h = player.h;
   const character = getSelectedCharacter();
   const happy = player.happyTimer > 0;
   const bounce = happy ? Math.sin(player.happyTimer * 0.45) * 1.5 : 0;
   ctx.fillStyle = character.bodyColor;
   ctx.beginPath();
-  drawRoundRect(x, y + 7 + bounce, player.w, player.h - 7, 16);
+  drawRoundRect(x, y + 7 + bounce, w, h - 7, Math.min(16, w * 0.3));
   ctx.fill();
 
   ctx.fillStyle = character.capColor;
   ctx.beginPath();
-  ctx.arc(x + player.w * 0.5, y + 10 + bounce, 24, Math.PI, 0);
+  ctx.arc(x + w * 0.5, y + 10 + bounce, Math.min(24, w * 0.46), Math.PI, 0);
   ctx.fill();
 
   ctx.strokeStyle = "#17324d";
   ctx.lineWidth = 3;
   ctx.beginPath();
   if (happy) {
-    ctx.arc(x + 21, y + 29 + bounce, 5, Math.PI * 0.08, Math.PI * 0.92);
-    ctx.moveTo(x + 42, y + 29 + bounce);
-    ctx.arc(x + 37, y + 29 + bounce, 5, Math.PI * 0.08, Math.PI * 0.92);
-    ctx.moveTo(x + 42, y + 36 + bounce);
-    ctx.arc(x + 29, y + 36 + bounce, 13, 0.18, Math.PI - 0.18);
+    ctx.arc(x + w * 0.38, y + h * 0.47 + bounce, 5, Math.PI * 0.08, Math.PI * 0.92);
+    ctx.moveTo(x + w * 0.78, y + h * 0.47 + bounce);
+    ctx.arc(x + w * 0.68, y + h * 0.47 + bounce, 5, Math.PI * 0.08, Math.PI * 0.92);
+    ctx.moveTo(x + w * 0.78, y + h * 0.58 + bounce);
+    ctx.arc(x + w * 0.54, y + h * 0.58 + bounce, 13, 0.18, Math.PI - 0.18);
   } else {
     ctx.fillStyle = "#17324d";
-    ctx.arc(x + 21, y + 28 + bounce, 4, 0, Math.PI * 2);
-    ctx.arc(x + 37, y + 28 + bounce, 4, 0, Math.PI * 2);
+    ctx.arc(x + w * 0.39, y + h * 0.45 + bounce, 4, 0, Math.PI * 2);
+    ctx.arc(x + w * 0.69, y + h * 0.45 + bounce, 4, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(x + 29, y + 37 + bounce, 10, 0.15, Math.PI - 0.15);
+    ctx.arc(x + w * 0.54, y + h * 0.6 + bounce, 10, 0.15, Math.PI - 0.15);
   }
   ctx.stroke();
 }
@@ -845,7 +942,7 @@ function drawFeverHud() {
 
   const barW = 260;
   const barH = 10;
-  const progress = feverTimer / 6000;
+  const progress = Math.min(feverTimer / feverDuration, 1);
   ctx.fillStyle = "rgba(255, 255, 255, 0.78)";
   ctx.beginPath();
   drawRoundRect(W / 2 - barW / 2, 92, barW, barH, 5);

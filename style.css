@@ -185,9 +185,9 @@ button {
 
 .character-select {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
   gap: 10px;
-  width: min(100%, 520px);
+  width: min(100%, 720px);
 }
 
 .character-button {
@@ -217,6 +217,62 @@ button {
   border-color: #e85d75;
   background: #fff6a8;
   box-shadow: 0 6px 0 #d7a942, 0 12px 20px rgba(98, 78, 35, 0.18);
+}
+
+.red-character {
+  border-color: rgba(232, 93, 117, 0.62);
+}
+
+.orange-character {
+  border-color: rgba(255, 143, 84, 0.62);
+}
+
+.yellow-character {
+  border-color: rgba(255, 216, 77, 0.72);
+}
+
+.green-character {
+  border-color: rgba(98, 205, 114, 0.62);
+}
+
+.blue-character {
+  border-color: rgba(57, 199, 255, 0.62);
+}
+
+.indigo-character {
+  border-color: rgba(74, 112, 210, 0.62);
+}
+
+.violet-character {
+  border-color: rgba(141, 60, 255, 0.62);
+}
+
+.character-button.selected.red-character {
+  background: #ffe1e7;
+}
+
+.character-button.selected.orange-character {
+  background: #ffe5cf;
+}
+
+.character-button.selected.yellow-character {
+  background: #fff6a8;
+}
+
+.character-button.selected.green-character {
+  background: #dff7d3;
+}
+
+.character-button.selected.blue-character {
+  background: #d9f8ff;
+}
+
+.character-button.selected.indigo-character {
+  background: #e2e8ff;
+}
+
+.character-button.selected.violet-character {
+  background: #eadfff;
 }
 
 .professor-tip {
@@ -429,7 +485,8 @@ button:active {
 
   .character-select {
     gap: 6px;
-    max-width: 320px;
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    max-width: 360px;
   }
 
   .character-button {
