@@ -125,6 +125,13 @@ button:active {
   box-shadow: 0 4px 0 #b9354c, 0 12px 18px rgba(98, 35, 50, 0.18);
 }
 
+.version-label {
+  margin-top: 4px;
+  color: rgba(24, 56, 78, 0.72);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
 @media (max-width: 620px) {
   body {
     padding: 10px;

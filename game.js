@@ -4,7 +4,9 @@ const scoreEl = document.querySelector("#score");
 const bestEl = document.querySelector("#best");
 const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
+const versionEl = document.querySelector("#version");
 
+const GAME_VERSION = "v0.2.1";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -32,6 +34,7 @@ const player = {
 };
 
 bestEl.textContent = best;
+versionEl.textContent = GAME_VERSION;
 drawIntro();
 
 function resetGame() {
@@ -167,7 +170,7 @@ function endGame() {
   running = false;
   gameOver = true;
   overlay.classList.remove("hidden");
-  overlay.querySelector("h1").textContent = "もう一回?";
+  overlay.querySelector("h1").textContent = "もう一回";
   overlay.querySelector("p").textContent = `星 ${score} こ。タップでリトライ。`;
   startButton.textContent = "リトライ";
   draw();
