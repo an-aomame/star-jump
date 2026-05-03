@@ -326,6 +326,11 @@ button {
   background: #ff6bd6;
 }
 
+.fever-star {
+  background: linear-gradient(135deg, #ff6bd6, #fff6a8 45%, #74f2ff);
+  transform: scale(1.15);
+}
+
 button:active {
   transform: translateY(4px);
   box-shadow: 0 4px 0 #b9354c, 0 12px 18px rgba(98, 35, 50, 0.18);

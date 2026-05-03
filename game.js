@@ -14,7 +14,7 @@ const professorTip = document.querySelector("#professorTip");
 const professorText = document.querySelector("#professorText");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.6.9";
+const GAME_VERSION = "v0.7.0";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -36,6 +36,7 @@ let stars = [];
 let scorePops = [];
 let bestPops = [];
 let bestFlash = 0;
+let feverTimer = 0;
 let bestToBeat = best;
 let bestCelebrated = false;
 let audioContext;
@@ -155,6 +156,7 @@ function resetGame() {
   scorePops = [];
   bestPops = [];
   bestFlash = 0;
+  feverTimer = 0;
   bestToBeat = best;
   bestCelebrated = false;
   startMusic();
@@ -216,6 +218,7 @@ function update(dt) {
   speed += 0.0028 * dt;
   spawnTimer -= 16.67 * dt;
   starTimer -= 16.67 * dt;
+  feverTimer = Math.max(0, feverTimer - 16.67 * dt);
 
   player.vy += getSelectedCharacter().gravity * dt;
   player.y += player.vy * dt;
@@ -235,7 +238,10 @@ function update(dt) {
 
   if (starTimer <= 0) {
     spawnStar();
-    starTimer = 850 + Math.random() * 950;
+    if (isFeverActive() && Math.random() < 0.55) {
+      spawnStar();
+    }
+    starTimer = isFeverActive() ? 170 + Math.random() * 180 : 850 + Math.random() * 950;
   }
 
   clouds.forEach((cloud) => {
@@ -261,17 +267,26 @@ function update(dt) {
     const dy = player.y + player.h / 2 - star.y;
     if (Math.hypot(dx, dy) < star.r + 34) {
       star.collected = true;
-      score += star.points;
-      scoreEl.textContent = score;
+      if (star.fever) {
+        startFever(star.x, star.y);
+      } else {
+        score += star.points;
+        scoreEl.textContent = score;
+      }
       scorePops.push({
         x: star.x,
         y: star.y,
         points: star.points,
+        text: star.fever ? "FEVER!" : `+${star.points}`,
         color: star.popColor,
         age: 0,
       });
       player.happyTimer = Math.max(player.happyTimer, 28);
-      playCollectSound(star.points);
+      if (star.fever) {
+        playFeverSound();
+      } else {
+        playCollectSound(star.points);
+      }
       if (score > best) {
         best = score;
         bestEl.textContent = best;
@@ -297,10 +312,20 @@ function spawnCloud() {
 }
 
 function spawnStar() {
+  const feverStar = !isFeverActive() && worldTime > 12000 && Math.random() < 0.07;
   const highStar = Math.random() < 0.34;
   const rarityRoll = Math.random();
   const starType =
-    rarityRoll < 0.06
+    feverStar
+      ? {
+          points: 0,
+          r: 30,
+          fill: "#fff6a8",
+          stroke: "#ff6bd6",
+          popColor: "#ff6bd6",
+          fever: true,
+        }
+      : rarityRoll < 0.06
       ? {
           points: 5,
           r: 24,
@@ -332,9 +357,26 @@ function spawnStar() {
     fill: starType.fill,
     stroke: starType.stroke,
     popColor: starType.popColor,
+    fever: Boolean(starType.fever),
     spin: Math.random() * Math.PI,
     collected: false,
   });
+}
+
+function startFever(x, y) {
+  feverTimer = 6000;
+  bestFlash = Math.max(bestFlash, 18);
+  scorePops.push({
+    x,
+    y: y - 38,
+    text: "BONUS TIME!",
+    color: "#8d3cff",
+    age: 0,
+  });
+}
+
+function isFeverActive() {
+  return feverTimer > 0;
 }
 
 function endGame() {
@@ -368,6 +410,7 @@ function showTitleScreen() {
   scorePops = [];
   bestPops = [];
   bestFlash = 0;
+  feverTimer = 0;
   player.y = groundY - player.h;
   player.vy = 0;
   player.grounded = true;
@@ -478,6 +521,7 @@ function draw() {
   clouds.forEach((cloud) => drawCloudShape(cloud.x, cloud.y, cloud.w, cloud.h));
   drawPlayer();
   drawBestFlash();
+  drawFeverHud();
   drawScorePops();
   drawBestPops();
 }
@@ -491,6 +535,7 @@ function drawSky() {
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, W, H);
 
+  drawFeverSky();
   drawSunAndMoon(colors);
   drawNightStars(colors.progress);
 
@@ -660,6 +705,36 @@ function drawNightStars(progress) {
   ctx.restore();
 }
 
+function drawFeverSky() {
+  if (!isFeverActive()) {
+    return;
+  }
+
+  const pulse = 0.5 + Math.sin(worldTime / 120) * 0.5;
+  const colors = ["#ff6bd6", "#fff6a8", "#74f2ff", "#8d3cff", "#7dff92"];
+
+  ctx.save();
+  ctx.globalAlpha = 0.16 + pulse * 0.08;
+  for (let i = 0; i < colors.length; i += 1) {
+    ctx.fillStyle = colors[i];
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, -40);
+    ctx.lineTo(i * 190 - 120 + pulse * 35, H);
+    ctx.lineTo(i * 190 + 120 + pulse * 35, H);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = "#fffef4";
+  for (let i = 0; i < 16; i += 1) {
+    const x = (i * 143 + worldTime * 0.08) % (W + 80) - 40;
+    const y = 34 + ((i * 67 + worldTime * 0.05) % 220);
+    drawStar(x, y, 7 + (i % 3) * 2, worldTime / 250 + i, "#fffef4", "#fff6a8");
+  }
+  ctx.restore();
+}
+
 function smoothStep(edge0, edge1, value) {
   const x = Math.min(Math.max((value - edge0) / (edge1 - edge0), 0), 1);
   return x * x * (3 - 2 * x);
@@ -704,6 +779,36 @@ function drawStar(x, y, r, rotation, fill, stroke) {
   ctx.restore();
 }
 
+function drawFeverHud() {
+  if (!isFeverActive()) {
+    return;
+  }
+
+  const seconds = Math.ceil(feverTimer / 1000);
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "900 34px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  ctx.lineWidth = 7;
+  ctx.strokeStyle = "#8d3cff";
+  ctx.fillStyle = "#fff6a8";
+  ctx.strokeText(`FEVER ${seconds}`, W / 2, 64);
+  ctx.fillText(`FEVER ${seconds}`, W / 2, 64);
+
+  const barW = 260;
+  const barH = 10;
+  const progress = feverTimer / 6000;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.78)";
+  ctx.beginPath();
+  drawRoundRect(W / 2 - barW / 2, 92, barW, barH, 5);
+  ctx.fill();
+  ctx.fillStyle = "#ff6bd6";
+  ctx.beginPath();
+  drawRoundRect(W / 2 - barW / 2, 92, barW * progress, barH, 5);
+  ctx.fill();
+  ctx.restore();
+}
+
 function drawScorePops() {
   scorePops.forEach((pop) => {
     pop.age += 1;
@@ -716,8 +821,8 @@ function drawScorePops() {
     ctx.font = "800 32px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.strokeText(`+${pop.points}`, pop.x, pop.y - progress * 42);
-    ctx.fillText(`+${pop.points}`, pop.x, pop.y - progress * 42);
+    ctx.strokeText(pop.text || `+${pop.points}`, pop.x, pop.y - progress * 42);
+    ctx.fillText(pop.text || `+${pop.points}`, pop.x, pop.y - progress * 42);
     ctx.restore();
   });
 
