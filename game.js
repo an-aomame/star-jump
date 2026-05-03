@@ -28,6 +28,7 @@ const player = {
   h: 62,
   vy: 0,
   grounded: true,
+  jumpsLeft: 2,
 };
 
 bestEl.textContent = best;
@@ -46,6 +47,7 @@ function resetGame() {
   player.y = groundY - player.h;
   player.vy = 0;
   player.grounded = true;
+  player.jumpsLeft = 2;
   scoreEl.textContent = score;
   overlay.classList.add("hidden");
   requestAnimationFrame(loop);
@@ -62,9 +64,10 @@ function jump() {
     return;
   }
 
-  if (player.grounded) {
-    player.vy = -15.5;
+  if (player.jumpsLeft > 0) {
+    player.vy = player.grounded ? -15.5 : -13.2;
     player.grounded = false;
+    player.jumpsLeft -= 1;
   }
 }
 
@@ -92,6 +95,7 @@ function update(dt) {
     player.y = groundY - player.h;
     player.vy = 0;
     player.grounded = true;
+    player.jumpsLeft = 2;
   }
 
   if (spawnTimer <= 0) {
@@ -149,9 +153,10 @@ function spawnCloud() {
 }
 
 function spawnStar() {
+  const highStar = Math.random() < 0.34;
   stars.push({
     x: W + 34,
-    y: 188 + Math.random() * 130,
+    y: highStar ? 108 + Math.random() * 58 : 188 + Math.random() * 130,
     r: 18,
     spin: Math.random() * Math.PI,
     collected: false,
