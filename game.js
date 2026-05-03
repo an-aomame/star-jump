@@ -1,6 +1,7 @@
 const canvas = document.querySelector("#game");
 const ctx = canvas.getContext("2d");
 const scoreEl = document.querySelector("#score");
+const livesEl = document.querySelector("#lives");
 const bestEl = document.querySelector("#best");
 const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
@@ -14,15 +15,17 @@ const professorTip = document.querySelector("#professorTip");
 const professorText = document.querySelector("#professorText");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.7.1";
+const GAME_VERSION = "v0.7.2";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
+const maxLives = 3;
 const bestKey = "star-jump-best";
 const characterKey = "star-jump-character";
 
 let best = Number(localStorage.getItem(bestKey) || 0);
 let score = 0;
+let lives = maxLives;
 let speed = 5.4;
 let running = false;
 let gameOver = false;
@@ -118,9 +121,11 @@ const player = {
   grounded: true,
   jumpsLeft: 2,
   happyTimer: 0,
+  invincibleTimer: 0,
 };
 
 bestEl.textContent = best;
+livesEl.textContent = lives;
 versionEl.textContent = GAME_VERSION;
 startButton.addEventListener("click", jump);
 titleButton.addEventListener("click", showTitleScreen);
@@ -143,6 +148,7 @@ syncCharacterButtons();
 
 function resetGame() {
   score = 0;
+  lives = maxLives;
   speed = 5.4;
   running = true;
   gameOver = false;
@@ -165,7 +171,9 @@ function resetGame() {
   player.grounded = true;
   player.jumpsLeft = getSelectedCharacter().maxJumps;
   player.happyTimer = 0;
+  player.invincibleTimer = 0;
   scoreEl.textContent = score;
+  livesEl.textContent = lives;
   characterSelect.classList.add("hidden");
   helpPanel.classList.add("hidden");
   professorTip.classList.add("hidden");
@@ -223,6 +231,7 @@ function update(dt) {
   player.vy += getSelectedCharacter().gravity * dt;
   player.y += player.vy * dt;
   player.happyTimer = Math.max(0, player.happyTimer - dt);
+  player.invincibleTimer = Math.max(0, player.invincibleTimer - 16.67 * dt);
 
   if (player.y >= groundY - player.h) {
     player.y = groundY - player.h;
@@ -256,8 +265,11 @@ function update(dt) {
   stars = stars.filter((star) => !star.collected && star.x > -50);
 
   for (const cloud of clouds) {
-    if (hitRect(player, cloud)) {
-      endGame();
+    if (player.invincibleTimer <= 0 && hitRect(player, cloud)) {
+      loseLife(cloud);
+      if (lives <= 0) {
+        endGame();
+      }
       return;
     }
   }
@@ -379,6 +391,25 @@ function isFeverActive() {
   return feverTimer > 0;
 }
 
+function loseLife(cloud) {
+  lives -= 1;
+  livesEl.textContent = lives;
+  player.invincibleTimer = 1400;
+  player.happyTimer = 0;
+  bestFlash = Math.max(bestFlash, 14);
+  scorePops.push({
+    x: player.x + player.w / 2,
+    y: player.y + 10,
+    text: lives > 0 ? "LIFE -1" : "LAST!",
+    color: "#e85d75",
+    age: 0,
+  });
+  if (cloud) {
+    cloud.x = -cloud.w - 40;
+  }
+  playDamageSound();
+}
+
 function endGame() {
   running = false;
   gameOver = true;
@@ -386,7 +417,7 @@ function endGame() {
   stopMusic();
   overlay.classList.remove("hidden");
   overlay.querySelector("h1").innerHTML = "もう<ruby>一回<rt>いっかい</rt></ruby>";
-  overlay.querySelector("p").innerHTML = `<ruby>星<rt>ほし</rt></ruby> ${score} こ。`;
+  overlay.querySelector("p").innerHTML = `<ruby>残機<rt>ざんき</rt></ruby>ゼロ。<ruby>星<rt>ほし</rt></ruby> ${score} こ。`;
   startButton.textContent = "リトライ";
   characterSelect.classList.add("hidden");
   helpPanel.classList.add("hidden");
@@ -411,12 +442,15 @@ function showTitleScreen() {
   bestPops = [];
   bestFlash = 0;
   feverTimer = 0;
+  lives = maxLives;
   player.y = groundY - player.h;
   player.vy = 0;
   player.grounded = true;
   player.jumpsLeft = getSelectedCharacter().maxJumps;
   player.happyTimer = 0;
+  player.invincibleTimer = 0;
   scoreEl.textContent = score;
+  livesEl.textContent = lives;
   overlay.classList.remove("hidden");
   overlay.querySelector("h1").innerHTML = "<ruby>星<rt>ほし</rt></ruby>あつめジャンプ";
   overlay.querySelector("p").innerHTML =
@@ -563,6 +597,10 @@ function drawGround() {
 }
 
 function drawPlayer() {
+  if (player.invincibleTimer > 0 && Math.floor(player.invincibleTimer / 110) % 2 === 0) {
+    return;
+  }
+
   const x = player.x;
   const y = player.y;
   const character = getSelectedCharacter();
@@ -1039,6 +1077,11 @@ function playFeverSound() {
   playTone(659, 0.07, 0.08, "triangle", 0.12);
   playTone(784, 0.14, 0.1, "triangle", 0.12);
   playTone(1046, 0.24, 0.18, "sine", 0.11);
+}
+
+function playDamageSound() {
+  playTone(330, 0, 0.1, "sawtooth", 0.09);
+  playTone(220, 0.08, 0.16, "sawtooth", 0.075);
 }
 
 function playGameOverSound() {
