@@ -51,6 +51,11 @@ body {
   text-align: right;
 }
 
+.top-bar .life-panel {
+  align-items: center;
+  text-align: center;
+}
+
 .label {
   font-size: 0.72rem;
   font-weight: 800;
@@ -65,15 +70,17 @@ strong {
 
 .lives {
   display: flex;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: 7px;
+  gap: 9px;
+  width: 94px;
   min-height: 28px;
   padding-top: 2px;
 }
 
 .heart {
   position: relative;
-  width: 20px;
+  width: 29px;
   height: 18px;
   transform: rotate(-45deg);
   transform-origin: center;
