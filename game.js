@@ -6,7 +6,7 @@ const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.3.1";
+const GAME_VERSION = "v0.4.0";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -147,14 +147,16 @@ function update(dt) {
     const dy = player.y + player.h / 2 - star.y;
     if (Math.hypot(dx, dy) < star.r + 34) {
       star.collected = true;
-      score += 1;
+      score += star.points;
       scoreEl.textContent = score;
       scorePops.push({
         x: star.x,
         y: star.y,
+        points: star.points,
+        color: star.popColor,
         age: 0,
       });
-      playCollectSound();
+      playCollectSound(star.points);
       if (score > best) {
         best = score;
         bestEl.textContent = best;
@@ -180,10 +182,40 @@ function spawnCloud() {
 
 function spawnStar() {
   const highStar = Math.random() < 0.34;
+  const rarityRoll = Math.random();
+  const starType =
+    rarityRoll < 0.06
+      ? {
+          points: 5,
+          r: 24,
+          fill: "#ff6bd6",
+          stroke: "#8d3cff",
+          popColor: "#ff6bd6",
+        }
+      : rarityRoll < 0.22
+        ? {
+            points: 2,
+            r: 21,
+            fill: "#74f2ff",
+            stroke: "#248dd4",
+            popColor: "#39c7ff",
+          }
+        : {
+            points: 1,
+            r: 18,
+            fill: "#ffd84d",
+            stroke: "#e99b24",
+            popColor: "#e85d75",
+          };
+
   stars.push({
     x: W + 34,
     y: highStar ? 108 + Math.random() * 58 : 188 + Math.random() * 130,
-    r: 18,
+    r: starType.r,
+    points: starType.points,
+    fill: starType.fill,
+    stroke: starType.stroke,
+    popColor: starType.popColor,
     spin: Math.random() * Math.PI,
     collected: false,
   });
@@ -218,13 +250,13 @@ function drawIntro() {
   drawGround();
   drawPlayer();
   drawCloudShape(650, groundY - 70, 98, 58);
-  drawStar(500, 240, 23, 0.2);
+  drawStar(500, 240, 23, 0.2, "#ffd84d", "#e99b24");
 }
 
 function draw() {
   drawSky();
   drawGround();
-  stars.forEach((star) => drawStar(star.x, star.y, star.r, star.spin));
+  stars.forEach((star) => drawStar(star.x, star.y, star.r, star.spin, star.fill, star.stroke));
   clouds.forEach((cloud) => drawCloudShape(cloud.x, cloud.y, cloud.w, cloud.h));
   drawPlayer();
   drawBestFlash();
@@ -302,12 +334,12 @@ function drawCloudPuff(x, y, r) {
   ctx.fill();
 }
 
-function drawStar(x, y, r, rotation) {
+function drawStar(x, y, r, rotation, fill, stroke) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rotation);
-  ctx.fillStyle = "#ffd84d";
-  ctx.strokeStyle = "#e99b24";
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = stroke;
   ctx.lineWidth = 3;
   ctx.beginPath();
   for (let i = 0; i < 10; i += 1) {
@@ -328,13 +360,13 @@ function drawScorePops() {
     ctx.save();
     ctx.globalAlpha = Math.max(0, 1 - progress);
     ctx.fillStyle = "#fffef4";
-    ctx.strokeStyle = "#e85d75";
+    ctx.strokeStyle = pop.color;
     ctx.lineWidth = 5;
     ctx.font = "800 32px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.strokeText("+1", pop.x, pop.y - progress * 42);
-    ctx.fillText("+1", pop.x, pop.y - progress * 42);
+    ctx.strokeText(`+${pop.points}`, pop.x, pop.y - progress * 42);
+    ctx.fillText(`+${pop.points}`, pop.x, pop.y - progress * 42);
     ctx.restore();
   });
 
@@ -425,7 +457,20 @@ function playTone(frequency, start, duration, type, volume) {
   oscillator.stop(audio.currentTime + start + duration);
 }
 
-function playCollectSound() {
+function playCollectSound(points) {
+  if (points >= 5) {
+    playTone(660, 0, 0.08, "sine", 0.13);
+    playTone(990, 0.06, 0.1, "sine", 0.12);
+    playTone(1480, 0.14, 0.18, "sine", 0.11);
+    return;
+  }
+
+  if (points >= 2) {
+    playTone(660, 0, 0.09, "sine", 0.12);
+    playTone(1100, 0.07, 0.14, "sine", 0.1);
+    return;
+  }
+
   playTone(660, 0, 0.09, "sine", 0.12);
   playTone(990, 0.06, 0.12, "sine", 0.1);
 }
