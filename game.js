@@ -6,7 +6,7 @@ const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.3.0";
+const GAME_VERSION = "v0.3.1";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -23,6 +23,10 @@ let starTimer = 0;
 let clouds = [];
 let stars = [];
 let scorePops = [];
+let bestPops = [];
+let bestFlash = 0;
+let bestToBeat = best;
+let bestCelebrated = false;
 let audioContext;
 
 const player = {
@@ -50,6 +54,10 @@ function resetGame() {
   clouds = [];
   stars = [];
   scorePops = [];
+  bestPops = [];
+  bestFlash = 0;
+  bestToBeat = best;
+  bestCelebrated = false;
   player.y = groundY - player.h;
   player.vy = 0;
   player.grounded = true;
@@ -152,6 +160,10 @@ function update(dt) {
         bestEl.textContent = best;
         localStorage.setItem(bestKey, String(best));
       }
+      if (!bestCelebrated && score > bestToBeat) {
+        celebrateBestScore(star.x, star.y);
+        bestCelebrated = true;
+      }
     }
   }
 }
@@ -215,7 +227,9 @@ function draw() {
   stars.forEach((star) => drawStar(star.x, star.y, star.r, star.spin));
   clouds.forEach((cloud) => drawCloudShape(cloud.x, cloud.y, cloud.w, cloud.h));
   drawPlayer();
+  drawBestFlash();
   drawScorePops();
+  drawBestPops();
 }
 
 function drawSky() {
@@ -327,6 +341,49 @@ function drawScorePops() {
   scorePops = scorePops.filter((pop) => pop.age < 42);
 }
 
+function drawBestPops() {
+  bestPops.forEach((pop) => {
+    pop.age += 1;
+    const progress = pop.age / 72;
+    const scale = 1 + Math.sin(progress * Math.PI) * 0.22;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - progress);
+    ctx.translate(pop.x, pop.y - progress * 64);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = "#fff6a8";
+    ctx.strokeStyle = "#e85d75";
+    ctx.lineWidth = 7;
+    ctx.font = "900 42px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.strokeText("BEST!", 0, 0);
+    ctx.fillText("BEST!", 0, 0);
+    ctx.restore();
+  });
+
+  bestPops = bestPops.filter((pop) => pop.age < 72);
+}
+
+function drawBestFlash() {
+  if (bestFlash <= 0) {
+    return;
+  }
+
+  const alpha = bestFlash / 22;
+  ctx.save();
+  ctx.globalAlpha = alpha * 0.32;
+  ctx.fillStyle = "#fff6a8";
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+  bestFlash -= 1;
+}
+
+function celebrateBestScore(x, y) {
+  bestPops.push({ x, y: y - 26, age: 0 });
+  bestFlash = 22;
+  playBestSound();
+}
+
 function getAudioContext() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) {
@@ -371,6 +428,12 @@ function playTone(frequency, start, duration, type, volume) {
 function playCollectSound() {
   playTone(660, 0, 0.09, "sine", 0.12);
   playTone(990, 0.06, 0.12, "sine", 0.1);
+}
+
+function playBestSound() {
+  playTone(660, 0, 0.08, "sine", 0.13);
+  playTone(880, 0.07, 0.1, "sine", 0.12);
+  playTone(1320, 0.16, 0.18, "sine", 0.11);
 }
 
 function playGameOverSound() {
