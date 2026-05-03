@@ -6,7 +6,7 @@ const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.4.0";
+const GAME_VERSION = "v0.5.0";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -18,6 +18,7 @@ let speed = 5.4;
 let running = false;
 let gameOver = false;
 let lastTime = 0;
+let worldTime = 0;
 let spawnTimer = 0;
 let starTimer = 0;
 let clouds = [];
@@ -49,6 +50,7 @@ function resetGame() {
   running = true;
   gameOver = false;
   lastTime = performance.now();
+  worldTime = 0;
   spawnTimer = 0;
   starTimer = 650;
   clouds = [];
@@ -100,6 +102,7 @@ function loop(now) {
 }
 
 function update(dt) {
+  worldTime += 16.67 * dt;
   speed += 0.0028 * dt;
   spawnTimer -= 16.67 * dt;
   starTimer -= 16.67 * dt;
@@ -265,14 +268,18 @@ function draw() {
 }
 
 function drawSky() {
+  const colors = getWorldColors();
   const sky = ctx.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, "#72c7ff");
-  sky.addColorStop(0.62, "#dff7ff");
-  sky.addColorStop(1, "#fff1bb");
+  sky.addColorStop(0, colors.skyTop);
+  sky.addColorStop(0.62, colors.skyMid);
+  sky.addColorStop(1, colors.horizon);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, W, H);
 
-  ctx.fillStyle = "rgba(255,255,255,0.82)";
+  drawSunAndMoon(colors);
+  drawNightStars(colors.progress);
+
+  ctx.fillStyle = colors.cloud;
   drawCloudPuff(118, 86, 34);
   drawCloudPuff(156, 82, 43);
   drawCloudPuff(200, 92, 31);
@@ -282,9 +289,10 @@ function drawSky() {
 }
 
 function drawGround() {
-  ctx.fillStyle = "#54bf62";
+  const colors = getWorldColors();
+  ctx.fillStyle = colors.ground;
   ctx.fillRect(0, groundY, W, H - groundY);
-  ctx.fillStyle = "#3aa24e";
+  ctx.fillStyle = colors.grass;
   for (let x = -20; x < W; x += 42) {
     ctx.beginPath();
     ctx.moveTo(x, groundY + 18);
@@ -321,7 +329,7 @@ function drawPlayer() {
 }
 
 function drawCloudShape(x, y, w, h) {
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = getWorldColors().cloud;
   drawCloudPuff(x + w * 0.25, y + h * 0.54, h * 0.34);
   drawCloudPuff(x + w * 0.48, y + h * 0.38, h * 0.44);
   drawCloudPuff(x + w * 0.72, y + h * 0.56, h * 0.32);
@@ -332,6 +340,109 @@ function drawCloudPuff(x, y, r) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();
+}
+
+function getWorldColors() {
+  const progress = Math.min(worldTime / 45000, 1);
+  const sunset = smoothStep(0.22, 0.58, progress);
+  const night = smoothStep(0.56, 1, progress);
+  const eveningTop = mixColor("#72c7ff", "#ff9a6a", sunset);
+  const eveningMid = mixColor("#dff7ff", "#ffd084", sunset);
+  const eveningHorizon = mixColor("#fff1bb", "#ffb46b", sunset);
+  const eveningGround = mixColor("#54bf62", "#4ea850", sunset);
+  const eveningGrass = mixColor("#3aa24e", "#348d45", sunset);
+
+  return {
+    progress,
+    skyTop: mixColor(eveningTop, "#15224f", night),
+    skyMid: mixColor(eveningMid, "#30366d", night),
+    horizon: mixColor(eveningHorizon, "#5b4b89", night),
+    ground: mixColor(eveningGround, "#24613b", night),
+    grass: mixColor(eveningGrass, "#1c4e35", night),
+    cloud: mixRgba([255, 255, 255, 0.82], [170, 178, 220, 0.68], night),
+  };
+}
+
+function drawSunAndMoon(colors) {
+  const progress = colors.progress;
+  const sunset = smoothStep(0.08, 0.68, progress);
+  const night = smoothStep(0.56, 1, progress);
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, 1 - night * 1.25);
+  ctx.fillStyle = "#fff2a8";
+  ctx.beginPath();
+  ctx.arc(730 - sunset * 260, 100 + sunset * 160, 36, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = night;
+  ctx.fillStyle = "#fff7cf";
+  ctx.beginPath();
+  ctx.arc(690, 98, 34, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = colors.skyTop;
+  ctx.beginPath();
+  ctx.arc(704, 88, 32, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawNightStars(progress) {
+  const night = smoothStep(0.62, 1, progress);
+  if (night <= 0) {
+    return;
+  }
+
+  const points = [
+    [86, 78, 2],
+    [242, 54, 1.6],
+    [354, 112, 1.9],
+    [522, 72, 1.4],
+    [806, 145, 2.1],
+    [612, 180, 1.5],
+  ];
+
+  ctx.save();
+  ctx.globalAlpha = night * 0.9;
+  ctx.fillStyle = "#fff9d7";
+  points.forEach(([x, y, r]) => {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+function smoothStep(edge0, edge1, value) {
+  const x = Math.min(Math.max((value - edge0) / (edge1 - edge0), 0), 1);
+  return x * x * (3 - 2 * x);
+}
+
+function mixColor(from, to, amount) {
+  const a = hexToRgb(from);
+  const b = hexToRgb(to);
+  const r = Math.round(a[0] + (b[0] - a[0]) * amount);
+  const g = Math.round(a[1] + (b[1] - a[1]) * amount);
+  const blue = Math.round(a[2] + (b[2] - a[2]) * amount);
+  return `rgb(${r}, ${g}, ${blue})`;
+}
+
+function mixRgba(from, to, amount) {
+  const r = Math.round(from[0] + (to[0] - from[0]) * amount);
+  const g = Math.round(from[1] + (to[1] - from[1]) * amount);
+  const b = Math.round(from[2] + (to[2] - from[2]) * amount);
+  const a = from[3] + (to[3] - from[3]) * amount;
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+function hexToRgb(hex) {
+  return [
+    Number.parseInt(hex.slice(1, 3), 16),
+    Number.parseInt(hex.slice(3, 5), 16),
+    Number.parseInt(hex.slice(5, 7), 16),
+  ];
 }
 
 function drawStar(x, y, r, rotation, fill, stroke) {
