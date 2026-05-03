@@ -6,7 +6,7 @@ const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.2.2";
+const GAME_VERSION = "v0.3.0";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -22,6 +22,8 @@ let spawnTimer = 0;
 let starTimer = 0;
 let clouds = [];
 let stars = [];
+let scorePops = [];
+let audioContext;
 
 const player = {
   x: 112,
@@ -47,6 +49,7 @@ function resetGame() {
   starTimer = 650;
   clouds = [];
   stars = [];
+  scorePops = [];
   player.y = groundY - player.h;
   player.vy = 0;
   player.grounded = true;
@@ -57,6 +60,8 @@ function resetGame() {
 }
 
 function jump() {
+  unlockAudio();
+
   if (!running) {
     resetGame();
     return;
@@ -136,6 +141,12 @@ function update(dt) {
       star.collected = true;
       score += 1;
       scoreEl.textContent = score;
+      scorePops.push({
+        x: star.x,
+        y: star.y,
+        age: 0,
+      });
+      playCollectSound();
       if (score > best) {
         best = score;
         bestEl.textContent = best;
@@ -173,6 +184,7 @@ function endGame() {
   overlay.querySelector("h1").textContent = "もう一回";
   overlay.querySelector("p").textContent = `星 ${score} こ。タップでリトライ。`;
   startButton.textContent = "リトライ";
+  playGameOverSound();
   draw();
 }
 
@@ -203,6 +215,7 @@ function draw() {
   stars.forEach((star) => drawStar(star.x, star.y, star.r, star.spin));
   clouds.forEach((cloud) => drawCloudShape(cloud.x, cloud.y, cloud.w, cloud.h));
   drawPlayer();
+  drawScorePops();
 }
 
 function drawSky() {
@@ -292,6 +305,77 @@ function drawStar(x, y, r, rotation) {
   ctx.fill();
   ctx.stroke();
   ctx.restore();
+}
+
+function drawScorePops() {
+  scorePops.forEach((pop) => {
+    pop.age += 1;
+    const progress = pop.age / 42;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - progress);
+    ctx.fillStyle = "#fffef4";
+    ctx.strokeStyle = "#e85d75";
+    ctx.lineWidth = 5;
+    ctx.font = "800 32px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.strokeText("+1", pop.x, pop.y - progress * 42);
+    ctx.fillText("+1", pop.x, pop.y - progress * 42);
+    ctx.restore();
+  });
+
+  scorePops = scorePops.filter((pop) => pop.age < 42);
+}
+
+function getAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    return null;
+  }
+
+  if (!audioContext) {
+    audioContext = new AudioContextClass();
+  }
+
+  return audioContext;
+}
+
+function unlockAudio() {
+  const audio = getAudioContext();
+  if (audio && audio.state === "suspended") {
+    audio.resume();
+  }
+}
+
+function playTone(frequency, start, duration, type, volume) {
+  const audio = getAudioContext();
+  if (!audio) {
+    return;
+  }
+
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, audio.currentTime + start);
+  gain.gain.setValueAtTime(0, audio.currentTime + start);
+  gain.gain.linearRampToValueAtTime(volume, audio.currentTime + start + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + start + duration);
+
+  oscillator.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start(audio.currentTime + start);
+  oscillator.stop(audio.currentTime + start + duration);
+}
+
+function playCollectSound() {
+  playTone(660, 0, 0.09, "sine", 0.12);
+  playTone(990, 0.06, 0.12, "sine", 0.1);
+}
+
+function playGameOverSound() {
+  playTone(220, 0, 0.18, "triangle", 0.12);
+  playTone(146, 0.14, 0.24, "triangle", 0.1);
 }
 
 startButton.addEventListener("click", jump);
