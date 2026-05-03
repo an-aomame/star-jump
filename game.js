@@ -7,9 +7,11 @@ const startButton = document.querySelector("#startButton");
 const titleButton = document.querySelector("#titleButton");
 const characterSelect = document.querySelector("#characterSelect");
 const characterButtons = document.querySelectorAll(".character-button");
+const professorTip = document.querySelector("#professorTip");
+const professorText = document.querySelector("#professorText");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.6.6";
+const GAME_VERSION = "v0.6.7";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -48,6 +50,7 @@ const characters = {
     maxJumps: 2,
     bodyColor: "#ffcf54",
     capColor: "#ff8f54",
+    description: "スターはクセが少ない万能型じゃ。2回ジャンプで地上雲も空中雲も落ち着いてよけられるぞ。",
   },
   sora: {
     name: "ソラ",
@@ -57,6 +60,7 @@ const characters = {
     maxJumps: 3,
     bodyColor: "#74f2ff",
     capColor: "#39c7ff",
+    description: "ソラはふわっと軽くて3回跳べるぞ。細かく高さを直せるから、高い星を拾いやすいんじゃ。",
   },
   bolt: {
     name: "ボルト",
@@ -66,6 +70,7 @@ const characters = {
     maxJumps: 1,
     bodyColor: "#fff6a8",
     capColor: "#e85d75",
+    description: "ボルトは一撃で高く跳ぶ勝負型じゃ。早めに押すと上の星にも届き、空中雲も越えやすいぞ。",
   },
 };
 
@@ -150,6 +155,7 @@ function resetGame() {
   player.happyTimer = 0;
   scoreEl.textContent = score;
   characterSelect.classList.add("hidden");
+  professorTip.classList.add("hidden");
   titleButton.classList.add("hidden");
   overlay.classList.add("hidden");
   requestAnimationFrame(loop);
@@ -323,6 +329,7 @@ function endGame() {
   overlay.querySelector("p").textContent = `星 ${score} こ。`;
   startButton.textContent = "リトライ";
   characterSelect.classList.add("hidden");
+  professorTip.classList.add("hidden");
   titleButton.classList.remove("hidden");
   playGameOverSound();
   safeDraw(draw);
@@ -350,6 +357,7 @@ function showTitleScreen() {
   overlay.querySelector("p").textContent = "キャラを選んで、星を集めよう。";
   startButton.textContent = "スタート";
   characterSelect.classList.remove("hidden");
+  professorTip.classList.remove("hidden");
   titleButton.classList.add("hidden");
   syncCharacterButtons();
   safeDraw(drawIntro);
@@ -377,6 +385,7 @@ function syncCharacterButtons() {
     button.classList.toggle("selected", selected);
     button.setAttribute("aria-pressed", String(selected));
   });
+  professorText.textContent = getSelectedCharacter().description;
 }
 
 function hitRect(a, b) {

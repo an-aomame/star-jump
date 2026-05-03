@@ -163,6 +163,67 @@ button {
   box-shadow: 0 6px 0 #d7a942, 0 12px 20px rgba(98, 78, 35, 0.18);
 }
 
+.professor-tip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 520px);
+  min-height: 72px;
+  padding: 10px 14px;
+  border: 2px solid rgba(255, 255, 255, 0.74);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 12px 22px rgba(29, 80, 115, 0.14);
+  text-align: left;
+}
+
+.professor-face {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #fff6d9;
+  border: 3px solid #48687a;
+  box-shadow: inset 0 9px 0 rgba(255, 255, 255, 0.85);
+}
+
+.professor-face::before,
+.professor-face::after {
+  content: "";
+  position: absolute;
+  top: 22px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #17324d;
+}
+
+.professor-face::before {
+  left: 15px;
+}
+
+.professor-face::after {
+  right: 15px;
+}
+
+.professor-face span {
+  position: absolute;
+  left: 15px;
+  right: 15px;
+  bottom: 11px;
+  height: 6px;
+  border-bottom: 3px solid #17324d;
+  border-radius: 0 0 999px 999px;
+}
+
+.professor-tip p {
+  max-width: none;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
 button:active {
   transform: translateY(4px);
   box-shadow: 0 4px 0 #b9354c, 0 12px 18px rgba(98, 35, 50, 0.18);
@@ -225,5 +286,38 @@ button:active {
 
   .character-button span {
     font-size: 0.68rem;
+  }
+
+  .professor-tip {
+    min-height: 60px;
+    padding: 8px 10px;
+  }
+
+  .professor-face {
+    width: 40px;
+    height: 40px;
+  }
+
+  .professor-face::before,
+  .professor-face::after {
+    top: 18px;
+  }
+
+  .professor-face::before {
+    left: 12px;
+  }
+
+  .professor-face::after {
+    right: 12px;
+  }
+
+  .professor-face span {
+    left: 12px;
+    right: 12px;
+    bottom: 9px;
+  }
+
+  .professor-tip p {
+    font-size: 0.78rem;
   }
 }
