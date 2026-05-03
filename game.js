@@ -11,7 +11,7 @@ const professorTip = document.querySelector("#professorTip");
 const professorText = document.querySelector("#professorText");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.6.7";
+const GAME_VERSION = "v0.6.8";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -50,7 +50,8 @@ const characters = {
     maxJumps: 2,
     bodyColor: "#ffcf54",
     capColor: "#ff8f54",
-    description: "スターはクセが少ない万能型じゃ。2回ジャンプで地上雲も空中雲も落ち着いてよけられるぞ。",
+    description:
+      "スターはクセが<ruby>少<rt>すく</rt></ruby>ない<ruby>万能型<rt>ばんのうがた</rt></ruby>じゃ。2<ruby>回<rt>かい</rt></ruby>ジャンプで<ruby>地上雲<rt>ちじょうぐも</rt></ruby>も<ruby>空中雲<rt>くうちゅうぐも</rt></ruby>も<ruby>落<rt>お</rt></ruby>ち<ruby>着<rt>つ</rt></ruby>いてよけられるぞ。",
   },
   sora: {
     name: "ソラ",
@@ -60,7 +61,8 @@ const characters = {
     maxJumps: 3,
     bodyColor: "#74f2ff",
     capColor: "#39c7ff",
-    description: "ソラはふわっと軽くて3回跳べるぞ。細かく高さを直せるから、高い星を拾いやすいんじゃ。",
+    description:
+      "ソラはふわっと<ruby>軽<rt>かる</rt></ruby>くて3<ruby>回<rt>かい</rt></ruby><ruby>跳<rt>と</rt></ruby>べるぞ。<ruby>細<rt>こま</rt></ruby>かく<ruby>高<rt>たか</rt></ruby>さを<ruby>直<rt>なお</rt></ruby>せるから、<ruby>高<rt>たか</rt></ruby>い<ruby>星<rt>ほし</rt></ruby>を<ruby>拾<rt>ひろ</rt></ruby>いやすいんじゃ。",
   },
   bolt: {
     name: "ボルト",
@@ -70,7 +72,8 @@ const characters = {
     maxJumps: 1,
     bodyColor: "#fff6a8",
     capColor: "#e85d75",
-    description: "ボルトは一撃で高く跳ぶ勝負型じゃ。早めに押すと上の星にも届き、空中雲も越えやすいぞ。",
+    description:
+      "ボルトは<ruby>一撃<rt>いちげき</rt></ruby>で<ruby>高<rt>たか</rt></ruby>く<ruby>跳<rt>と</rt></ruby>ぶ<ruby>勝負型<rt>しょうぶがた</rt></ruby>じゃ。<ruby>早<rt>はや</rt></ruby>めに<ruby>押<rt>お</rt></ruby>すと<ruby>上<rt>うえ</rt></ruby>の<ruby>星<rt>ほし</rt></ruby>にも<ruby>届<rt>とど</rt></ruby>き、<ruby>空中雲<rt>くうちゅうぐも</rt></ruby>も<ruby>越<rt>こ</rt></ruby>えやすいぞ。",
   },
 };
 
@@ -325,8 +328,8 @@ function endGame() {
   gameOver = true;
   stopMusic();
   overlay.classList.remove("hidden");
-  overlay.querySelector("h1").textContent = "もう一回";
-  overlay.querySelector("p").textContent = `星 ${score} こ。`;
+  overlay.querySelector("h1").innerHTML = "もう<ruby>一回<rt>いっかい</rt></ruby>";
+  overlay.querySelector("p").innerHTML = `<ruby>星<rt>ほし</rt></ruby> ${score} こ。`;
   startButton.textContent = "リトライ";
   characterSelect.classList.add("hidden");
   professorTip.classList.add("hidden");
@@ -353,8 +356,9 @@ function showTitleScreen() {
   player.happyTimer = 0;
   scoreEl.textContent = score;
   overlay.classList.remove("hidden");
-  overlay.querySelector("h1").textContent = "星あつめジャンプ";
-  overlay.querySelector("p").textContent = "キャラを選んで、星を集めよう。";
+  overlay.querySelector("h1").innerHTML = "<ruby>星<rt>ほし</rt></ruby>あつめジャンプ";
+  overlay.querySelector("p").innerHTML =
+    "キャラを<ruby>選<rt>えら</rt></ruby>んで、<ruby>星<rt>ほし</rt></ruby>を<ruby>集<rt>あつ</rt></ruby>めよう。";
   startButton.textContent = "スタート";
   characterSelect.classList.remove("hidden");
   professorTip.classList.remove("hidden");
@@ -385,7 +389,7 @@ function syncCharacterButtons() {
     button.classList.toggle("selected", selected);
     button.setAttribute("aria-pressed", String(selected));
   });
-  professorText.textContent = getSelectedCharacter().description;
+  professorText.innerHTML = getSelectedCharacter().description;
 }
 
 function hitRect(a, b) {
