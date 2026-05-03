@@ -6,7 +6,7 @@ const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.5.2";
+const GAME_VERSION = "v0.6.0";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -29,6 +29,9 @@ let bestFlash = 0;
 let bestToBeat = best;
 let bestCelebrated = false;
 let audioContext;
+let musicGain;
+let musicTimer;
+let musicStep = 0;
 
 const player = {
   x: 112,
@@ -68,6 +71,7 @@ function resetGame() {
   bestFlash = 0;
   bestToBeat = best;
   bestCelebrated = false;
+  startMusic();
   player.y = groundY - player.h;
   player.vy = 0;
   player.grounded = true;
@@ -235,6 +239,7 @@ function spawnStar() {
 function endGame() {
   running = false;
   gameOver = true;
+  stopMusic();
   overlay.classList.remove("hidden");
   overlay.querySelector("h1").textContent = "もう一回";
   overlay.querySelector("p").textContent = `星 ${score} こ。タップでリトライ。`;
@@ -584,6 +589,83 @@ function unlockAudio() {
   if (audio && audio.state === "suspended") {
     audio.resume();
   }
+}
+
+function startMusic() {
+  stopMusic();
+  const gain = getMusicGain();
+  if (gain) {
+    gain.gain.setValueAtTime(0.2, getAudioContext().currentTime);
+  }
+  musicStep = 0;
+  scheduleMusicBar();
+  musicTimer = setInterval(scheduleMusicBar, 1920);
+}
+
+function stopMusic() {
+  if (musicTimer) {
+    clearInterval(musicTimer);
+    musicTimer = undefined;
+  }
+  const gain = getMusicGain();
+  if (gain) {
+    gain.gain.setValueAtTime(0, getAudioContext().currentTime);
+  }
+}
+
+function scheduleMusicBar() {
+  if (!running) {
+    return;
+  }
+
+  const melody = [392, 494, 587, 494, 440, 523, 659, 523];
+  const bass = [196, 247, 220, 262];
+  for (let i = 0; i < 8; i += 1) {
+    const step = musicStep + i;
+    const start = i * 0.24;
+    playMusicTone(melody[step % melody.length], start, 0.16, "triangle", 0.12);
+    if (i % 2 === 0) {
+      playMusicTone(bass[Math.floor(step / 2) % bass.length], start, 0.22, "sine", 0.08);
+    }
+  }
+  musicStep += 8;
+}
+
+function getMusicGain() {
+  const audio = getAudioContext();
+  if (!audio) {
+    return null;
+  }
+
+  if (!musicGain) {
+    musicGain = audio.createGain();
+    musicGain.gain.setValueAtTime(0, audio.currentTime);
+    musicGain.connect(audio.destination);
+  }
+
+  return musicGain;
+}
+
+function playMusicTone(frequency, start, duration, type, volume) {
+  const audio = getAudioContext();
+  const gain = getMusicGain();
+  if (!audio || !gain) {
+    return;
+  }
+
+  const oscillator = audio.createOscillator();
+  const noteGain = audio.createGain();
+
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, audio.currentTime + start);
+  noteGain.gain.setValueAtTime(0, audio.currentTime + start);
+  noteGain.gain.linearRampToValueAtTime(volume, audio.currentTime + start + 0.01);
+  noteGain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + start + duration);
+
+  oscillator.connect(noteGain);
+  noteGain.connect(gain);
+  oscillator.start(audio.currentTime + start);
+  oscillator.stop(audio.currentTime + start + duration);
 }
 
 function playTone(frequency, start, duration, type, volume) {
