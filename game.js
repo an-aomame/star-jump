@@ -6,7 +6,7 @@ const overlay = document.querySelector("#overlay");
 const startButton = document.querySelector("#startButton");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.5.0";
+const GAME_VERSION = "v0.5.2";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
@@ -42,7 +42,15 @@ const player = {
 
 bestEl.textContent = best;
 versionEl.textContent = GAME_VERSION;
-drawIntro();
+startButton.addEventListener("click", jump);
+canvas.addEventListener("pointerdown", jump);
+window.addEventListener("keydown", (event) => {
+  if (event.code === "Space" || event.code === "ArrowUp") {
+    event.preventDefault();
+    jump();
+  }
+});
+safeDraw(drawIntro);
 
 function resetGame() {
   score = 0;
@@ -94,7 +102,7 @@ function loop(now) {
   lastTime = now;
 
   update(dt);
-  draw();
+  safeDraw(draw);
 
   if (running) {
     requestAnimationFrame(loop);
@@ -232,7 +240,7 @@ function endGame() {
   overlay.querySelector("p").textContent = `星 ${score} こ。タップでリトライ。`;
   startButton.textContent = "リトライ";
   playGameOverSound();
-  draw();
+  safeDraw(draw);
 }
 
 function hitRect(a, b) {
@@ -254,6 +262,22 @@ function drawIntro() {
   drawPlayer();
   drawCloudShape(650, groundY - 70, 98, 58);
   drawStar(500, 240, 23, 0.2, "#ffd84d", "#e99b24");
+}
+
+function safeDraw(drawFn) {
+  try {
+    drawFn();
+  } catch (error) {
+    drawFallback();
+  }
+}
+
+function drawFallback() {
+  ctx.fillStyle = "#72c7ff";
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#54bf62";
+  ctx.fillRect(0, groundY, W, H - groundY);
+  drawPlayer();
 }
 
 function draw() {
@@ -307,7 +331,7 @@ function drawPlayer() {
   const y = player.y;
   ctx.fillStyle = "#ffcf54";
   ctx.beginPath();
-  ctx.roundRect(x, y + 7, player.w, player.h - 7, 16);
+  drawRoundRect(x, y + 7, player.w, player.h - 7, 16);
   ctx.fill();
 
   ctx.fillStyle = "#ff8f54";
@@ -328,6 +352,23 @@ function drawPlayer() {
   ctx.stroke();
 }
 
+function drawRoundRect(x, y, w, h, r) {
+  if (ctx.roundRect) {
+    ctx.roundRect(x, y, w, h, r);
+    return;
+  }
+
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+}
+
 function drawCloudShape(x, y, w, h) {
   ctx.fillStyle = getWorldColors().cloud;
   drawCloudPuff(x + w * 0.25, y + h * 0.54, h * 0.34);
@@ -346,19 +387,19 @@ function getWorldColors() {
   const progress = Math.min(worldTime / 45000, 1);
   const sunset = smoothStep(0.22, 0.58, progress);
   const night = smoothStep(0.56, 1, progress);
-  const eveningTop = mixColor("#72c7ff", "#ff9a6a", sunset);
-  const eveningMid = mixColor("#dff7ff", "#ffd084", sunset);
-  const eveningHorizon = mixColor("#fff1bb", "#ffb46b", sunset);
-  const eveningGround = mixColor("#54bf62", "#4ea850", sunset);
-  const eveningGrass = mixColor("#3aa24e", "#348d45", sunset);
+  const eveningTop = mixRgb([114, 199, 255], [255, 154, 106], sunset);
+  const eveningMid = mixRgb([223, 247, 255], [255, 208, 132], sunset);
+  const eveningHorizon = mixRgb([255, 241, 187], [255, 180, 107], sunset);
+  const eveningGround = mixRgb([84, 191, 98], [78, 168, 80], sunset);
+  const eveningGrass = mixRgb([58, 162, 78], [52, 141, 69], sunset);
 
   return {
     progress,
-    skyTop: mixColor(eveningTop, "#15224f", night),
-    skyMid: mixColor(eveningMid, "#30366d", night),
-    horizon: mixColor(eveningHorizon, "#5b4b89", night),
-    ground: mixColor(eveningGround, "#24613b", night),
-    grass: mixColor(eveningGrass, "#1c4e35", night),
+    skyTop: rgbString(mixRgb(eveningTop, [21, 34, 79], night)),
+    skyMid: rgbString(mixRgb(eveningMid, [48, 54, 109], night)),
+    horizon: rgbString(mixRgb(eveningHorizon, [91, 75, 137], night)),
+    ground: rgbString(mixRgb(eveningGround, [36, 97, 59], night)),
+    grass: rgbString(mixRgb(eveningGrass, [28, 78, 53], night)),
     cloud: mixRgba([255, 255, 255, 0.82], [170, 178, 220, 0.68], night),
   };
 }
@@ -407,7 +448,10 @@ function drawNightStars(progress) {
   ctx.save();
   ctx.globalAlpha = night * 0.9;
   ctx.fillStyle = "#fff9d7";
-  points.forEach(([x, y, r]) => {
+  points.forEach((point) => {
+    const x = point[0];
+    const y = point[1];
+    const r = point[2];
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
@@ -420,13 +464,16 @@ function smoothStep(edge0, edge1, value) {
   return x * x * (3 - 2 * x);
 }
 
-function mixColor(from, to, amount) {
-  const a = hexToRgb(from);
-  const b = hexToRgb(to);
-  const r = Math.round(a[0] + (b[0] - a[0]) * amount);
-  const g = Math.round(a[1] + (b[1] - a[1]) * amount);
-  const blue = Math.round(a[2] + (b[2] - a[2]) * amount);
-  return `rgb(${r}, ${g}, ${blue})`;
+function mixRgb(from, to, amount) {
+  return [
+    Math.round(from[0] + (to[0] - from[0]) * amount),
+    Math.round(from[1] + (to[1] - from[1]) * amount),
+    Math.round(from[2] + (to[2] - from[2]) * amount),
+  ];
+}
+
+function rgbString(color) {
+  return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
 function mixRgba(from, to, amount) {
@@ -435,14 +482,6 @@ function mixRgba(from, to, amount) {
   const b = Math.round(from[2] + (to[2] - from[2]) * amount);
   const a = from[3] + (to[3] - from[3]) * amount;
   return `rgba(${r}, ${g}, ${b}, ${a})`;
-}
-
-function hexToRgb(hex) {
-  return [
-    Number.parseInt(hex.slice(1, 3), 16),
-    Number.parseInt(hex.slice(3, 5), 16),
-    Number.parseInt(hex.slice(5, 7), 16),
-  ];
 }
 
 function drawStar(x, y, r, rotation, fill, stroke) {
@@ -596,12 +635,3 @@ function playGameOverSound() {
   playTone(220, 0, 0.18, "triangle", 0.12);
   playTone(146, 0.14, 0.24, "triangle", 0.1);
 }
-
-startButton.addEventListener("click", jump);
-canvas.addEventListener("pointerdown", jump);
-window.addEventListener("keydown", (event) => {
-  if (event.code === "Space" || event.code === "ArrowUp") {
-    event.preventDefault();
-    jump();
-  }
-});
