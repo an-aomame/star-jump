@@ -15,7 +15,7 @@ const professorTip = document.querySelector("#professorTip");
 const professorText = document.querySelector("#professorText");
 const versionEl = document.querySelector("#version");
 
-const GAME_VERSION = "v0.8.0";
+const GAME_VERSION = "v0.8.1";
 const W = canvas.width;
 const H = canvas.height;
 const groundY = 440;
